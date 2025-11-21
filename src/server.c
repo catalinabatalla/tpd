@@ -118,11 +118,26 @@ int main() {
             
             // FASE 1: HELLO [cite: 36]
             if (packet->type == TYPE_HELLO && cli->state == STATE_NONE) {
-                printf("Cliente %d: HELLO recibido.\n", idx);
+                printf("Cliente %d: HELLO recibido con credencial: %.*s\n", idx, n-2, packet->payload);
                 // Aquí validarías credenciales. Asumimos OK.
-                send_ack(sockfd, &cli_addr, 0, NULL);
-                cli->state = STATE_AUTH;
-                cli->expected_seq = 1; // Próximo seq esperado
+                char credencial_valida[] = "TEST";
+
+                if (strncmp(packet->payload, credencial_valida, strlen(credencial_valida)) == 0) {
+                    // Credencial OK -> Enviar ACK vacío (éxito)
+                    send_ack(sockfd, &cli_addr, 0, NULL);
+                    cli->state = STATE_AUTH;
+                    cli->expected_seq = 1;
+                } else {
+                    // Credencial MALA -> Enviar ACK con mensaje de error
+                    printf("Cliente %d: Credencial invalida rechazadas.\n", idx);
+                    send_ack(sockfd, &cli_addr, 0, "Credencial Invalida");
+                    // Mantenemos el estado en NONE o reiniciamos
+                    cli->active = 0; 
+                }
+
+                // send_ack(sockfd, &cli_addr, 0, NULL);
+                // cli->state = STATE_AUTH;
+                // cli->expected_seq = 1; // Próximo seq esperado
             }
             // FASE 2: WRQ 
             else if (packet->type == TYPE_WRQ && cli->state == STATE_AUTH) {
@@ -142,7 +157,8 @@ int main() {
                 }
 
                 char path[50];
-                sprintf(path, "uploads_%d_%s", idx, filename);
+                // sprintf(path, "uploads_%d_%s", idx, filename);
+                strncpy(path, filename, 49);
                 cli->fp = fopen(path, "wb");
                 
                 if (cli->fp) {

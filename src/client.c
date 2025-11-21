@@ -40,8 +40,8 @@ int send_and_wait(int sockfd, struct sockaddr_in *serv_addr, struct pdu *packet,
 }
 
 int main(int argc, char *argv[]) {
-    if (argc != 4) {
-        printf("Uso: %s <IP Servidor> <Credencial> <Archivo a subir>\n", argv[0]);
+    if (argc != 5) {
+        printf("Uso: %s <IP Servidor> <Credencial> <Archivo Local> <Nombre Remoto>\n", argv[0]);
         return -1;
     }
 
@@ -72,26 +72,41 @@ int main(int argc, char *argv[]) {
     printf("Enviando HELLO...\n");
     packet.type = TYPE_HELLO;
     packet.seq_num = 0;
-    strcpy(packet.payload, argv[2]); // Credencial
+    strncpy(packet.payload, argv[2], MAX_PAYLOAD_SIZE); // Credencial
     if (!send_and_wait(sockfd, &serv_addr, &packet, strlen(argv[2]))) {
-        printf("Fallo HELLO\n"); return -1;
+        printf("Fallo HELLO\n"); 
+        close(sockfd);
+        return -1;
     }
 
     // --- FASE 2: WRQ ---
     printf("Enviando WRQ...\n");
     packet.type = TYPE_WRQ;
     packet.seq_num = 1;
-    // Asegurar que el nombre del archivo sea simple para el protocolo
-    // En producción deberías extraer solo el nombre base, no el path completo
-    char *filename = "demo.txt"; 
-    strcpy(packet.payload, filename); 
-    if (!send_and_wait(sockfd, &serv_addr, &packet, strlen(filename))) {
-        printf("Fallo WRQ\n"); return -1;
+    // // Asegurar que el nombre del archivo sea simple para el protocolo
+    // // En producción deberías extraer solo el nombre base, no el path completo
+    // char *filename = "demo.txt"; 
+    // strcpy(packet.payload, filename); 
+    // if (!send_and_wait(sockfd, &serv_addr, &packet, strlen(filename))) {
+    //     printf("Fallo WRQ\n"); return -1;
+    // }
+    packet.type = TYPE_WRQ;
+    packet.seq_num = 1;
+    strncpy(packet.payload, argv[4], MAX_PAYLOAD_SIZE);
+    
+    if (!send_and_wait(sockfd, &serv_addr, &packet, strlen(argv[4]))) {
+        printf("Fallo WRQ\n");
+        close(sockfd);
+        return -1;
     }
+
 
     // --- FASE 3: DATA ---
     FILE *fp = fopen(argv[3], "rb");
-    if (!fp) { perror("No se puede abrir archivo"); return -1; }
+    if (!fp) { 
+        perror("No se puede abrir archivo"); 
+        close (sockfd); 
+        return -1; }
 
     int bytes_read;
     int current_seq = 0;
@@ -103,7 +118,10 @@ int main(int argc, char *argv[]) {
         printf("Enviando DATA seq %d (%d bytes)...\n", current_seq, bytes_read);
         
         if (!send_and_wait(sockfd, &serv_addr, &packet, bytes_read)) {
-            printf("Fallo DATA transmission\n"); fclose(fp); return -1;
+            printf("Fallo DATA transmission\n"); 
+            fclose(fp); 
+            close(sockfd);
+            return -1;
         }
         
         current_seq = 1 - current_seq; // Toggle 0/1
