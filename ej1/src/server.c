@@ -120,7 +120,7 @@ int main() {
             if (packet->type == TYPE_HELLO && cli->state == STATE_NONE) {
                 printf("Cliente %d: HELLO recibido con credencial: %.*s\n", idx, n-2, packet->payload);
                 // Aquí validarías credenciales. Asumimos OK.
-                char credencial_valida[] = "TEST";
+                char credencial_valida[] = "g21-0e29";
 
                 if (strncmp(packet->payload, credencial_valida, strlen(credencial_valida)) == 0) {
                     // Credencial OK -> Enviar ACK vacío (éxito)

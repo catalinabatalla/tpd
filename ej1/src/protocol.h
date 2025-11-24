@@ -7,7 +7,7 @@
 // Puerto del servidor [cite: 26]
 #define SERVER_PORT 20252
 // Tamaño máximo de payload recomendado [cite: 32]
-#define MAX_PAYLOAD_SIZE 1478
+#define MAX_PAYLOAD_SIZE 1450
 #define BUF_SIZE 1500
 
 // Tipos de mensaje [cite: 29]
