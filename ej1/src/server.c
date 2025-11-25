@@ -116,11 +116,10 @@ int main() {
 
             // --- MÁQUINA DE ESTADOS ---
             
-            // FASE 1: HELLO [cite: 36]
+            // FASE 1: HELLO 
             if (packet->type == TYPE_HELLO && cli->state == STATE_NONE) {
                 printf("Cliente %d: HELLO recibido con credencial: %.*s\n", idx, n-2, packet->payload);
-                // Aquí validarías credenciales. Asumimos OK.
-                char credencial_valida[] = "g21-0e29";
+                char credencial_valida[] = "g21-0e29"; // Credencial de la catedra
 
                 if (strncmp(packet->payload, credencial_valida, strlen(credencial_valida)) == 0) {
                     // Credencial OK -> Enviar ACK vacío (éxito)
@@ -134,10 +133,6 @@ int main() {
                     // Mantenemos el estado en NONE o reiniciamos
                     cli->active = 0; 
                 }
-
-                // send_ack(sockfd, &cli_addr, 0, NULL);
-                // cli->state = STATE_AUTH;
-                // cli->expected_seq = 1; // Próximo seq esperado
             }
             // FASE 2: WRQ 
             else if (packet->type == TYPE_WRQ && cli->state == STATE_AUTH) {
@@ -157,7 +152,6 @@ int main() {
                 }
 
                 char path[50];
-                // sprintf(path, "uploads_%d_%s", idx, filename);
                 strncpy(path, filename, 49);
                 cli->fp = fopen(path, "wb");
                 
@@ -169,7 +163,7 @@ int main() {
                     send_ack(sockfd, &cli_addr, 1, "Error FS");
                 }
             }
-            // FASE 3: DATA [cite: 40]
+            // FASE 3: DATA
             else if (packet->type == TYPE_DATA && cli->state == STATE_DATA) {
                 if (packet->seq_num == cli->expected_seq) {
                     // Escribir en archivo (n - 2 bytes de header)
@@ -183,7 +177,7 @@ int main() {
                     send_ack(sockfd, &cli_addr, 1 - cli->expected_seq, NULL);
                 }
             }
-            // FASE 4: FIN [cite: 42]
+            // FASE 4: FIN
             else if (packet->type == TYPE_FIN && cli->state == STATE_DATA) {
                 printf("Cliente %d: FIN recibido. Cerrando.\n", idx);
                 if (cli->fp) fclose(cli->fp);
@@ -194,7 +188,7 @@ int main() {
                 cli->fp = NULL;
             }
             else {
-                // Paquete fuera de secuencia o estado incorrecto: ignorar silenciosamente [cite: 34]
+                // Paquete fuera de secuencia o estado incorrecto: ignorar silenciosamente
             }
         }
     }

@@ -83,16 +83,7 @@ int main(int argc, char *argv[]) {
     printf("Enviando WRQ...\n");
     packet.type = TYPE_WRQ;
     packet.seq_num = 1;
-    // // Asegurar que el nombre del archivo sea simple para el protocolo
-    // // En producción deberías extraer solo el nombre base, no el path completo
-    // char *filename = "demo.txt"; 
-    // strcpy(packet.payload, filename); 
-    // if (!send_and_wait(sockfd, &serv_addr, &packet, strlen(filename))) {
-    //     printf("Fallo WRQ\n"); return -1;
-    // }
-    packet.type = TYPE_WRQ;
-    packet.seq_num = 1;
-    strncpy(packet.payload, argv[4], MAX_PAYLOAD_SIZE);
+    strncpy(packet.payload, argv[4], MAX_PAYLOAD_SIZE);  // Nombre remoto
     
     if (!send_and_wait(sockfd, &serv_addr, &packet, strlen(argv[4]))) {
         printf("Fallo WRQ\n");
@@ -102,7 +93,7 @@ int main(int argc, char *argv[]) {
 
 
     // --- FASE 3: DATA ---
-    FILE *fp = fopen(argv[3], "rb");
+    FILE *fp = fopen(argv[3], "rb"); // Archivo local
     if (!fp) { 
         perror("No se puede abrir archivo"); 
         close (sockfd); 
